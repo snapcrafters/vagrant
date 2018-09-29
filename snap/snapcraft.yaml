@@ -7,6 +7,7 @@ description: |
   configuration file which describes all your software requirements,
   packages, operating system configuration, users, and more.
 
+base: core18
 grade: devel
 confinement: classic
 
@@ -23,6 +24,6 @@ parts:
     plugin: nil
     source: 'https://github.com/hashicorp/vagrant/archive/v$SNAPCRAFT_PROJECT_VERSION.tar.gz'
     build: gem build vagrant.gemspec
-    install: gem install vagrant-*.gem -i $SNAPCRAFT_PART_INSTALL.rb
+    install: gem install vagrant-*.gem -i $SNAPCRAFT_PART_INSTALL
     build-packages: [gcc, libc6-dev, make, ruby-dev]
     stage-packages: [ruby]
