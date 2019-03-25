@@ -1,5 +1,6 @@
 language: bash
 os: linux
+dist: xenial
 sudo: enabled
 env:
   global:
