@@ -1,27 +1,34 @@
 language: bash
 os: linux
+dist: xenial
 sudo: enabled
 env:
   global:
     - LC_ALL: C.UTF-8
     - LANG: C.UTF-8
+    - SNAPCRAFT_HAS_TTY: no
+    - SNAPCRAFT_ENABLE_SILENT_REPORT: yes
+    - PATH: "/snap/bin:$PATH"
 
-install:
-  - sudo apt update
-  - sudo apt install -y snapd
-  - sudo snap install lxd --channel 3.0/stable
-  - sudo snap install snapcraft --candidate --classic
-  - sudo /snap/bin/lxd waitready
-  - sudo /snap/bin/lxd init --auto
-  - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
+addons:
+  snaps:
+  - name: core
+  - name: lxd
+  - name: snapcraft
+    channel: beta/lxd
+    classic: true
+  - name: transfer
+  - name: http
+before_script:
+  # Avoid conflicts with socket and bridges.
+  - sudo apt autoremove --purge --yes lxd lxd-client
+  - sudo -E lxd waitready
+  - sudo -E lxd init --auto
 script:
-  - export PATH=/snap/bin:$PATH
-  - sudo snapcraft cleanbuild
-  - sudo cp *.snap "$(echo "$TRAVIS_REPO_SLUG" | sed -e 's|.*/\(.*\)|\1|')-pr$TRAVIS_PULL_REQUEST.snap"
+  - sudo -E snapcraft --use-lxd
+  - cp *.snap "$(echo "$TRAVIS_REPO_SLUG" | sed -e 's|.*/\(.*\)|\1|')-pr$TRAVIS_PULL_REQUEST.snap"
 after_success:
-  - sudo snap install transfer
-  - timeout 180 sudo /snap/bin/transfer "$(echo "$TRAVIS_REPO_SLUG" | sed -e 's|.*/\(.*\)|\1|')-pr$TRAVIS_PULL_REQUEST.snap"
+  - timeout 180 transfer "$(echo "$TRAVIS_REPO_SLUG" | sed -e 's|.*/\(.*\)|\1|')-pr$TRAVIS_PULL_REQUEST.snap"
 after_failure:
-  - sudo journalctl -u snapd
-  - sudo snap install http
-  - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
+  - journalctl -u snapd
+  - http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
